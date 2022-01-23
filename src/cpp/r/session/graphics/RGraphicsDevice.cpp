@@ -1,7 +1,7 @@
 /*
  * RGraphicsDevice.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,11 @@
 
 #include <cstdlib>
 
-#include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/bind/bind.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
@@ -42,49 +42,55 @@
 #undef FALSE
 #undef ERROR
 
-#ifdef TRACE_GD_CALLS
-#define TRACE_GD_CALL std::cerr << \
-   std::string(BOOST_CURRENT_FUNCTION).substr( \
-   std::string(BOOST_CURRENT_FUNCTION).find_last_of("::") + 1) \
-   << std::endl;
-#else
-#define TRACE_GD_CALL
-#endif
+#define TRACE_GD_CALL (::rstudio::r::session::graphics::device::GD_Trace(BOOST_CURRENT_FUNCTION))
 
-
-using namespace rstudio::core ;
+using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
 namespace device {
+
+// whether or not we should trace GD calls
+// intentionally not in anonymous namespace so that it can
+// be referenced and changed without explicit header export
+bool s_gdTracingEnabled = false;
+
+void GD_Trace(const std::string& func)
+{
+   if (s_gdTracingEnabled)
+   {
+      std::cerr << func.substr(func.find_last_of("::") + 1) << std::endl;
+   }
+}
    
 namespace {
-   
+
 // name of our graphics device
 const char * const kRStudioDevice = "RStudioGD";
 
 // GE device description
-pGEDevDesc s_pGEDevDesc = NULL;   
+pGEDevDesc s_pGEDevDesc = nullptr;
 
 // externally provided locator function
-boost::function<bool(double*,double*)> s_locatorFunction;
-   
+boost::function<bool(double*, double*)> s_locatorFunction;
+
 // global size attributes (used to initialize new devices)
 int s_width = 0;
-int s_height = 0;   
+int s_height = 0;
 double s_devicePixelRatio = 1.0;
    
 // provide GraphicsDeviceEvents for plot manager
-GraphicsDeviceEvents s_graphicsDeviceEvents;   
+GraphicsDeviceEvents s_graphicsDeviceEvents;
    
 using namespace handler;
 
    
 void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // delegate
    handler::newPage(gc, dev);
@@ -96,7 +102,7 @@ void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 
 Rboolean GD_NewFrameConfirm(pDevDesc dd)
 {   
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // returning false causes the default implementation (printing a prompt
    // of "Hit <Return> to see next plot:" to the console) to be used. this 
@@ -107,7 +113,7 @@ Rboolean GD_NewFrameConfirm(pDevDesc dd)
    
 void GD_Mode(int mode, pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // 0 = stop drawing
    // 1 = start drawing
@@ -124,7 +130,7 @@ void GD_Size(double *left,
              double *top,
              pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    *left = 0.0;
    *right = s_width;
@@ -134,7 +140,7 @@ void GD_Size(double *left,
 
 void GD_Clip(double x0, double x1, double y0, double y1, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::clip(x0, x1, y0, y1, dev);
 }
@@ -147,7 +153,7 @@ void GD_Rect(double x0,
              const pGEcontext gc,
              pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::rect(x0, y0, x1, y1, gc, dev);
 }
@@ -160,7 +166,7 @@ void GD_Path(double *x,
              const pGEcontext gc,
              pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::path(x, y, npoly, nper, winding, gc, dd);
 }
@@ -177,14 +183,14 @@ void GD_Raster(unsigned int *raster,
                const pGEcontext gc,
                pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::raster(raster, w, h, x, y, width, height, rot, interpolate, gc, dd);
 }
 
 SEXP GD_Cap(pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    return handler::cap(dd);
 }
@@ -195,7 +201,7 @@ void GD_Circle(double x,
                const pGEcontext gc,
                pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::circle(x, y, r, gc, dev);
 }
@@ -207,7 +213,7 @@ void GD_Line(double x1,
              const pGEcontext gc,
              pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::line(x1, y1, x2, y2, gc, dev);
 }
@@ -218,7 +224,7 @@ void GD_Polyline(int n,
                  const pGEcontext gc,
                  pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::polyline(n, x, y, gc, dev);
 }
@@ -229,7 +235,7 @@ void GD_Polygon(int n,
                 const pGEcontext gc,
                 pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::polygon(n, x, y, gc, dev);
 }
@@ -241,7 +247,7 @@ void GD_MetricInfo(int c,
                    double* width,
                    pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::metricInfo(c, gc, ascent, descent, width, dev);
    
@@ -265,14 +271,14 @@ void GD_MetricInfo(int c,
 
 double GD_StrWidth(const char *str, const pGEcontext gc, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    return handler::strWidth(str, gc, dev);
 }
 
 double GD_StrWidthUTF8(const char *str, const pGEcontext gc, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    return handler::strWidth(str, gc, dev);
 }
@@ -285,7 +291,7 @@ void GD_Text(double x,
              const pGEcontext gc,
              pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::text(x, y, str, rot, hadj, gc, dev);
 }
@@ -298,7 +304,7 @@ void GD_TextUTF8(double x,
                  const pGEcontext gc,
                  pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::text(x, y, str, rot, hadj, gc, dev);
 }
@@ -306,7 +312,7 @@ void GD_TextUTF8(double x,
 
 Rboolean GD_Locator(double *x, double *y, pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    if (s_locatorFunction)
    {
@@ -317,7 +323,7 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
          // if our graphics device went away while we were waiting 
          // for locator input then we need to return false
          
-         if (s_pGEDevDesc != NULL)
+         if (s_pGEDevDesc != nullptr)
             return TRUE;
          else
             return FALSE;
@@ -336,19 +342,19 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 
 void GD_Activate(pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 }
 
 void GD_Deactivate(pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 }   
    
 void GD_Close(pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
    {
       // destroy device specific struct
       DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
@@ -359,10 +365,10 @@ void GD_Close(pDevDesc dev)
       // and the heap R is compiled with (we observed this to a problem with
       // 64-bit R)
       std::free(s_pGEDevDesc->dev);
-      s_pGEDevDesc->dev = NULL;
+      s_pGEDevDesc->dev = nullptr;
       
       // set GDDevDesc to NULL so we don't reference it again
-      s_pGEDevDesc = NULL;
+      s_pGEDevDesc = nullptr;
    }
 
    s_graphicsDeviceEvents.onClosed();
@@ -370,7 +376,7 @@ void GD_Close(pDevDesc dev)
    
 void GD_OnExit(pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // NOTE: this may be called at various times including during error 
    // handling (jump_to_top_ex). therefore, do not place any process or device
@@ -380,7 +386,7 @@ void GD_OnExit(pDevDesc dd)
 
 int GD_HoldFlush(pDevDesc dd, int level)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // NOTE: holdflush does not apply to bitmap devices since they are
    // already "buffered" via the fact that they only do expensive operations
@@ -393,6 +399,49 @@ int GD_HoldFlush(pDevDesc dd, int level)
    // every e.g. 1-second during background processing.
 
    return 0;
+}
+
+// NOTE: pattern / clip / mask callbacks appear (as of R 4.1.0) to only
+// be used by the Cairo and PDF devices; other implementations which
+// do not make use of these features just return R_NilValue and otherwise
+// do nothing
+
+#define TRACE_GD_CALL (::rstudio::r::session::graphics::device::GD_Trace(BOOST_CURRENT_FUNCTION))
+
+SEXP GD_SetPattern(SEXP pattern, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   return handler::setPattern(pattern, dd);
+}
+
+void GD_ReleasePattern(SEXP ref, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::releasePattern(ref, dd);
+}
+
+SEXP GD_SetClipPath(SEXP path, SEXP ref, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   return handler::setClipPath(path, ref, dd);
+}
+
+void GD_ReleaseClipPath(SEXP ref, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::releaseClipPath(ref, dd);
+}
+
+SEXP GD_SetMask(SEXP path, SEXP ref, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   return handler::setMask(path, ref, dd);
+}
+
+void GD_ReleaseMask(SEXP ref, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::releaseMask(ref, dd);
 }
 
 void resyncDisplayList()
@@ -427,7 +476,7 @@ void resyncDisplayList()
       {
          std::string errMsg;
          if (r::isCodeExecutionError(error, &errMsg))
-            Rprintf(errMsg.c_str());
+            Rprintf("%s\n", errMsg.c_str());
          else
             LOG_ERROR(error);
       }
@@ -445,19 +494,21 @@ void resizeGraphicsDevice()
 }   
    
 // routine which creates device  
-SEXP createGD()
+SEXP rs_createGD()
 {   
    // error if there is already an RStudio device
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
    {
       if (!r::session::utils::isServerMode())
       {
          Error error = r::exec::executeString(".rs.newDesktopGraphicsDevice()");
          if (error)
          {
-            std::string msg = error.summary();
+            std::string msg = error.getSummary();
             r::isCodeExecutionError(error, &msg);
-            Rf_warning(("Error creating graphics device: " + msg).c_str());
+            
+            std::string rMsg = "Error creating graphics device: " + msg;
+            Rf_warning("%s\n", rMsg.c_str());
          }
       }
       else
@@ -472,8 +523,8 @@ SEXP createGD()
    
    BEGIN_SUSPEND_INTERRUPTS 
    {
-      // initialize v12 structure
-      DevDescVersion12 devDesc;
+      // initialize device description
+      RSDevDesc devDesc;
 
       // device functions
       devDesc.activate = GD_Activate;
@@ -503,8 +554,16 @@ SEXP createGD()
       devDesc.newFrameConfirm = GD_NewFrameConfirm;
       devDesc.onExit = GD_OnExit;
       devDesc.eventEnv = R_NilValue;
-      devDesc.eventHelper = NULL;
+      devDesc.eventHelper = nullptr;
       devDesc.holdflush = GD_HoldFlush;
+
+      // added in version 14 (R 4.1.0)
+      devDesc.setPattern = GD_SetPattern;
+      devDesc.releasePattern = GD_ReleasePattern;
+      devDesc.setClipPath = GD_SetClipPath;
+      devDesc.releaseClipPath = GD_ReleaseClipPath;
+      devDesc.setMask = GD_SetMask;
+      devDesc.releaseMask = GD_ReleaseMask;
 
       // capabilities flags
       devDesc.haveTransparency = 2;
@@ -548,7 +607,8 @@ SEXP createGD()
       handler::onAfterAddDevice(pDC);
 
       // make us active
-      Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev)); 
+      int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
+      Rf_selectDevice(deviceNumber);
    } 
    END_SUSPEND_INTERRUPTS;
 
@@ -564,25 +624,26 @@ Error makeActive()
       return Error(graphics::errc::IncompatibleGraphicsEngine, ERROR_LOCATION);
 
    // make sure we have been created
-   if (s_pGEDevDesc == NULL)
+   if (s_pGEDevDesc == nullptr)
    {
       SEXP ignoredSEXP;
-      Error error = r::exec::executeSafely<SEXP>(boost::bind(createGD), 
+      Error error = r::exec::executeSafely<SEXP>(boost::bind(rs_createGD),
                                                  &ignoredSEXP);
       if (error)
          return error;
    }
    
    // select us
-   Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev)); 
+   int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
+   Rf_selectDevice(deviceNumber);
    
    return Success();
 }
 
 bool isActive()
 {
-   return s_pGEDevDesc != NULL &&
-          Rf_ndevNumber(s_pGEDevDesc->dev) == Rf_curDevice();
+   return s_pGEDevDesc != nullptr &&
+         Rf_ndevNumber(s_pGEDevDesc->dev) == Rf_curDevice();
 }
 
 SEXP rs_activateGD()
@@ -640,11 +701,11 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    // ensure we are active
    Error error = makeActive();
    if (error)
-      return error ;
+      return error;
    
    // save snaphot file
    error = r::exec::RFunction(".rs.saveGraphics",
-                              string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                              string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
       return error;
 
@@ -658,11 +719,11 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
    // ensure we are active
    Error error = makeActive();
    if (error)
-      return error ;
+      return error;
    
    // restore
    return r::exec::RFunction(".rs.restoreGraphics",
-                             string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                             string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
 }
     
 void copyToActiveDevice()
@@ -678,23 +739,23 @@ std::string imageFileExtension()
 
 void onBeforeExecute()
 {
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
    {
       DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
-      if (pDC != NULL)
+      if (pDC != nullptr)
          handler::onBeforeExecute(pDC);
    }
 }
 
 } // anonymous namespace
-    
+
 void playDisplayList()
 {
    GEplayDisplayList(s_pGEDevDesc);
 }
 
-const int kDefaultWidth = 500;   
-const int kDefaultHeight = 500; 
+const int kDefaultWidth = 500;
+const int kDefaultHeight = 500;
 const double kDefaultDevicePixelRatio = 1.0;
    
 Error initialize(
@@ -736,19 +797,8 @@ Error initialize(
    std::string message;
    if (graphics::validateRequirements(&message))
    {
-      // register device creation routine
-      R_CallMethodDef createGDMethodDef ;
-      createGDMethodDef.name = "rs_createGD" ;
-      createGDMethodDef.fun = (DL_FUNC) createGD ;
-      createGDMethodDef.numArgs = 0;
-      r::routines::addCallMethod(createGDMethodDef);
-
-      // regsiter device activiation routine
-      R_CallMethodDef activateGDMethodDef ;
-      activateGDMethodDef.name = "rs_activateGD" ;
-      activateGDMethodDef.fun = (DL_FUNC) rs_activateGD ;
-      activateGDMethodDef.numArgs = 0;
-      r::routines::addCallMethod(activateGDMethodDef);
+      RS_REGISTER_CALL_METHOD(rs_createGD);
+      RS_REGISTER_CALL_METHOD(rs_activateGD);
 
       // initialize
       return r::exec::RFunction(".rs.initGraphicsDevice").call();
@@ -777,7 +827,7 @@ void setSize(int width, int height, double devicePixelRatio)
       s_devicePixelRatio = devicePixelRatio;
       
       // if there is a device active sync its size
-      if (s_pGEDevDesc != NULL)
+      if (s_pGEDevDesc != nullptr)
          resizeGraphicsDevice();
    }
 }
@@ -799,8 +849,11 @@ double devicePixelRatio()
    
 void close()
 {     
-   if (s_pGEDevDesc != NULL)
-      Rf_killDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
+   if (s_pGEDevDesc != nullptr)
+   {
+      int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
+      Rf_killDevice(deviceNumber);
+   }
 }
    
 

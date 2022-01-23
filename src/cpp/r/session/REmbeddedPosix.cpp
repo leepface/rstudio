@@ -104,7 +104,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    structRstart rp;
    Rstart Rp = &rp;
    R_DefParams(Rp) ;
-   Rp->R_Slave = FALSE ;
+   Rp->R_NoEcho = FALSE ;
    Rp->R_Quiet = quiet ? TRUE : FALSE;
    Rp->R_Interactive = TRUE ;
    Rp->SaveAction = defaultSaveAction ;
