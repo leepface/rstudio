@@ -20,8 +20,8 @@
 #include <boost/thread.hpp>
 #include <boost/bind/bind.hpp>
 
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
+#include <core/Error.hpp>
+#include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
@@ -65,7 +65,7 @@ void GD_Trace(const std::string& func)
       std::cerr << func.substr(func.find_last_of("::") + 1) << std::endl;
    }
 }
-   
+
 namespace {
 
 // name of our graphics device
@@ -81,13 +81,13 @@ boost::function<bool(double*, double*)> s_locatorFunction;
 int s_width = 0;
 int s_height = 0;
 double s_devicePixelRatio = 1.0;
-   
+
 // provide GraphicsDeviceEvents for plot manager
 GraphicsDeviceEvents s_graphicsDeviceEvents;
-   
+
 using namespace handler;
 
-   
+
 void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 {
    TRACE_GD_CALL;
@@ -101,17 +101,17 @@ void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 }
 
 Rboolean GD_NewFrameConfirm(pDevDesc dd)
-{   
+{
    TRACE_GD_CALL;
 
    // returning false causes the default implementation (printing a prompt
-   // of "Hit <Return> to see next plot:" to the console) to be used. this 
+   // of "Hit <Return> to see next plot:" to the console) to be used. this
    // seems ideal compared to any custom UI we could produce so we leave it be
    return FALSE;
 }
-   
-   
-void GD_Mode(int mode, pDevDesc dev) 
+
+
+void GD_Mode(int mode, pDevDesc dev)
 {
    TRACE_GD_CALL;
 
@@ -124,11 +124,11 @@ void GD_Mode(int mode, pDevDesc dev)
    s_graphicsDeviceEvents.onDrawing();
 }
 
-void GD_Size(double *left, 
+void GD_Size(double *left,
              double *right,
-             double *bottom, 
+             double *bottom,
              double *top,
-             pDevDesc dev) 
+             pDevDesc dev)
 {
    TRACE_GD_CALL;
 
@@ -250,7 +250,7 @@ void GD_MetricInfo(int c,
    TRACE_GD_CALL;
 
    handler::metricInfo(c, gc, ascent, descent, width, dev);
-   
+
    // in some rare cases, attempts to retrieve metric info can fail
    // (this seems to occur if the request occurs immediately after the
    // device is deactivated and then activated). detect these cases and
@@ -310,7 +310,7 @@ void GD_TextUTF8(double x,
 }
 
 
-Rboolean GD_Locator(double *x, double *y, pDevDesc dev) 
+Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 {
    TRACE_GD_CALL;
 
@@ -320,9 +320,9 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 
       if(s_locatorFunction(x,y))
       {
-         // if our graphics device went away while we were waiting 
+         // if our graphics device went away while we were waiting
          // for locator input then we need to return false
-         
+
          if (s_pGEDevDesc != nullptr)
             return TRUE;
          else
@@ -340,17 +340,17 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
    }
 }
 
-void GD_Activate(pDevDesc dev) 
+void GD_Activate(pDevDesc dev)
 {
    TRACE_GD_CALL;
 }
 
-void GD_Deactivate(pDevDesc dev) 
+void GD_Deactivate(pDevDesc dev)
 {
    TRACE_GD_CALL;
-}   
-   
-void GD_Close(pDevDesc dev) 
+}
+
+void GD_Close(pDevDesc dev)
 {
    TRACE_GD_CALL;
 
@@ -366,21 +366,21 @@ void GD_Close(pDevDesc dev)
       // 64-bit R)
       std::free(s_pGEDevDesc->dev);
       s_pGEDevDesc->dev = nullptr;
-      
+
       // set GDDevDesc to NULL so we don't reference it again
       s_pGEDevDesc = nullptr;
    }
 
    s_graphicsDeviceEvents.onClosed();
 }
-   
+
 void GD_OnExit(pDevDesc dd)
 {
    TRACE_GD_CALL;
 
-   // NOTE: this may be called at various times including during error 
+   // NOTE: this may be called at various times including during error
    // handling (jump_to_top_ex). therefore, do not place any process or device
-   // final termination code here (even though the name of the function 
+   // final termination code here (even though the name of the function
    // suggests you might want to do this!)
 }
 
@@ -491,11 +491,11 @@ void resizeGraphicsDevice()
 
    // notify listeners of resize
    s_graphicsDeviceEvents.onResized();
-}   
-   
-// routine which creates device  
+}
+
+// routine which creates device
 SEXP rs_createGD()
-{   
+{
    // error if there is already an RStudio device
    if (s_pGEDevDesc != nullptr)
    {
@@ -504,9 +504,9 @@ SEXP rs_createGD()
          Error error = r::exec::executeString(".rs.newDesktopGraphicsDevice()");
          if (error)
          {
-            std::string msg = error.getSummary();
+            std::string msg = error.summary();
             r::isCodeExecutionError(error, &msg);
-            
+
             std::string rMsg = "Error creating graphics device: " + msg;
             Rf_warning("%s\n", rMsg.c_str());
          }
@@ -520,8 +520,8 @@ SEXP rs_createGD()
 
 
    R_CheckDeviceAvailable();
-   
-   BEGIN_SUSPEND_INTERRUPTS 
+
+   BEGIN_SUSPEND_INTERRUPTS
    {
       // initialize device description
       RSDevDesc devDesc;
@@ -602,19 +602,19 @@ SEXP rs_createGD()
       // associate with device description and add it
       s_pGEDevDesc = GEcreateDevDesc(pDev);
       GEaddDevice2(s_pGEDevDesc, kRStudioDevice);
-      
+
       // notify handler we have added (so it can regenerate its context)
       handler::onAfterAddDevice(pDC);
 
       // make us active
       int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
       Rf_selectDevice(deviceNumber);
-   } 
+   }
    END_SUSPEND_INTERRUPTS;
 
    return R_NilValue;
 }
-   
+
 // ensure that our device is created and active (required for snapshot
 // creation/restoration)
 Error makeActive()
@@ -632,11 +632,11 @@ Error makeActive()
       if (error)
          return error;
    }
-   
+
    // select us
    int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
    Rf_selectDevice(deviceNumber);
-   
+
    return Success();
 }
 
@@ -702,10 +702,10 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    Error error = makeActive();
    if (error)
       return error;
-   
+
    // save snaphot file
    error = r::exec::RFunction(".rs.saveGraphics",
-                              string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
+                              string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
    if (error)
       return error;
 
@@ -720,18 +720,18 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
    Error error = makeActive();
    if (error)
       return error;
-   
+
    // restore
    return r::exec::RFunction(".rs.restoreGraphics",
-                             string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
+                             string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
 }
-    
+
 void copyToActiveDevice()
 {
    int rsDeviceNumber = GEdeviceNumber(s_pGEDevDesc);
    r::exec::RFunction(".rs.GEcopyDisplayList", rsDeviceNumber).call();
 }
-   
+
 std::string imageFileExtension()
 {
    return "png";
@@ -757,17 +757,17 @@ void playDisplayList()
 const int kDefaultWidth = 500;
 const int kDefaultHeight = 500;
 const double kDefaultDevicePixelRatio = 1.0;
-   
+
 Error initialize(
             const FilePath& graphicsPath,
             const boost::function<bool(double*,double*)>& locatorFunction)
-{      
+{
    // initialize shadow handler
    r::session::graphics::handler::installShadowHandler();
 
    // save reference to locator function
    s_locatorFunction = locatorFunction;
-   
+
    // device conversion functions
    UnitConversionFunctions convert;
    convert.deviceToUser = deviceToUser;
@@ -789,7 +789,7 @@ Error initialize(
                                           &s_graphicsDeviceEvents);
    if (error)
       return error;
-   
+
    // set size
    setSize(kDefaultWidth, kDefaultHeight, kDefaultDevicePixelRatio);
 
@@ -818,25 +818,25 @@ Error initialize(
 
 void setSize(int width, int height, double devicePixelRatio)
 {
-   // only set if the values have changed (prevents unnecessary plot 
+   // only set if the values have changed (prevents unnecessary plot
    // invalidations from occuring)
    if ( width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
    {
       s_width = width;
       s_height = height;
       s_devicePixelRatio = devicePixelRatio;
-      
+
       // if there is a device active sync its size
       if (s_pGEDevDesc != nullptr)
          resizeGraphicsDevice();
    }
 }
-   
+
 int getWidth()
 {
    return s_width;
 }
-   
+
 int getHeight()
 {
    return s_height;
@@ -846,18 +846,18 @@ double devicePixelRatio()
 {
    return s_devicePixelRatio;
 }
-   
+
 void close()
-{     
+{
    if (s_pGEDevDesc != nullptr)
    {
       int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
       Rf_killDevice(deviceNumber);
    }
 }
-   
 
- 
+
+
 } // namespace device
 
 // if we don't have pango cairo then provide a null definition
@@ -872,6 +872,3 @@ void installCairoHandler() {}
 } // namespace session
 } // namespace r
 } // namespace rstudio
-
-
-

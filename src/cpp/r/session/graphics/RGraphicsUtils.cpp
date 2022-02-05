@@ -17,7 +17,7 @@
 
 #include <boost/format.hpp>
 
-#include <shared_core/Error.hpp>
+#include <core/Error.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
@@ -40,11 +40,11 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace r {
 namespace session {
-namespace graphics { 
+namespace graphics {
 
 namespace {
 
-int s_compatibleEngineVersion = 13;
+int s_compatibleEngineVersion = 15;
 
 #ifdef __APPLE__
 class QuartzStatus : boost::noncopyable
@@ -171,7 +171,7 @@ bool validateRequirements(std::string* pMessage)
 std::string extraBitmapParams()
 {
    std::vector<std::string> params;
-   
+
    std::vector<std::string> supportedBackends;
    Error error = r::exec::RFunction(".rs.graphics.supportedBackends").call(&supportedBackends);
    if (error)
@@ -179,9 +179,9 @@ std::string extraBitmapParams()
       LOG_ERROR(error);
       return "";
    }
-   
+
    std::string backend = getDefaultBackend();
-   
+
    // if the requested backend is not supported, silently use the default
    // (this could happen if a package's configuration was migrated from
    // one machine to another on a different OS)
@@ -191,7 +191,7 @@ std::string extraBitmapParams()
       if (it == supportedBackends.end())
          backend = "default";
    }
-   
+
    // don't use the 'ragg' backend here (these parameters are normally passed
    // to devices defined by the 'grDevices' package, and it doesn't handle
    // 'ragg')
@@ -199,7 +199,7 @@ std::string extraBitmapParams()
    {
       params.push_back("type = \"" + backend + "\"");
    }
-   
+
    std::string antialias = getDefaultAntialiasing();
 
 #ifdef _WIN32
@@ -210,10 +210,10 @@ std::string extraBitmapParams()
 
    if (antialias != "default")
       params.push_back("antialias = \"" + antialias + "\"");
-   
+
    if (params.empty())
       return "";
-   
+
    return ", " + core::algorithm::join(params, ", ");
 }
 
@@ -223,14 +223,14 @@ struct RestorePreviousGraphicsDeviceScope::Impl
    pGEDevDesc pPreviousDevice;
 };
 
-   
+
 RestorePreviousGraphicsDeviceScope::RestorePreviousGraphicsDeviceScope()
    : pImpl_(new Impl())
 {
    // save ptr to previously selected device (if there is one)
    pImpl_->pPreviousDevice = Rf_NoDevices() ? nullptr : GEcurrentDevice();
 }
-         
+
 RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
 {
    try
@@ -262,10 +262,9 @@ void logAndReportError(const Error& error, const ErrorLocation& location)
    // report to user
    reportError(error);
 }
-        
+
 
 } // namespace graphics
 } // namespace session
 } // namespace r
 } // namespace rstudio
-

@@ -15,8 +15,8 @@
 
 #include "RGraphicsPlotManipulator.hpp"
 
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
+#include <core/Error.hpp>
+#include <core/FilePath.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -26,7 +26,7 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace r {
 namespace session {
-namespace graphics { 
+namespace graphics {
 
 
 PlotManipulator::PlotManipulator()
@@ -59,7 +59,7 @@ Error PlotManipulator::save(const FilePath& filePath) const
    // call manipulator save
    r::exec::RFunction manipSave("manipulate:::manipulatorSave");
    manipSave.addParam(sexp_.get());
-   manipSave.addParam(filePath.getAbsolutePath());
+   manipSave.addParam(filePath.absolutePath());
    return manipSave.call();
 }
 
@@ -67,7 +67,7 @@ Error PlotManipulator::load(const FilePath& filePath)
 {
    // call manipulator load
    r::exec::RFunction manipLoad("manipulate:::manipulatorLoad");
-   manipLoad.addParam(filePath.getAbsolutePath());
+   manipLoad.addParam(filePath.absolutePath());
    r::sexp::Protect rProtect;
    SEXP manipSEXP;
    Error error = manipLoad.call(&manipSEXP, &rProtect);
@@ -270,4 +270,3 @@ SEXP PlotManipulator::getUserVisibleValuesList() const
 } // namespace session
 } // namespace r
 } // namespace rstudio
-

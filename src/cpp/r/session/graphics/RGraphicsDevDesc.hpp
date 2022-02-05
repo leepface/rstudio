@@ -26,7 +26,7 @@
 
 #include "RGraphicsDevDescVersions.hpp"
 
-typedef DevDescVersion14 RSDevDesc;
+typedef DevDescVersion15 RSDevDesc;
 
 namespace rstudio {
 namespace r {
@@ -57,14 +57,14 @@ void polygon(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd);
 void polyline(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd);
 void rect(double x0, double y0, double x1, double y1,
           const pGEcontext gc, pDevDesc dd);
-void path(double *x, double *y, 
+void path(double *x, double *y,
           int npoly, int *nper,
           Rboolean winding,
           const pGEcontext gc, pDevDesc dd);
 void raster(unsigned int *raster, int w, int h,
-            double x, double y, 
+            double x, double y,
             double width, double height,
-            double rot, 
+            double rot,
             Rboolean interpolate,
             const pGEcontext gc, pDevDesc dd);
 SEXP cap(pDevDesc dd);
@@ -83,7 +83,15 @@ void releaseClipPath(SEXP ref, pDevDesc dd);
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd);
 void releaseMask(SEXP ref, pDevDesc dd);
 
+SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd);
+void useGroup(SEXP ref, SEXP trans, pDevDesc dd);
+void releaseGroup(SEXP ref, pDevDesc dd);
 
+void stroke(SEXP path, const pGEcontext gc, pDevDesc dd);
+void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+
+SEXP capabilities(SEXP cap);
 
 } // namespace dev_desc
 } // namespace handler
@@ -95,4 +103,3 @@ void releaseMask(SEXP ref, pDevDesc dd);
 
 
 #endif // R_SESSION_GRAPHICS_DEV_DESC_HPP
-

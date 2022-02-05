@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-#include <shared_core/Error.hpp>
+#include <core/Error.hpp>
 #include <core/Log.hpp>
 
 #include <core/system/System.hpp>
@@ -34,11 +34,11 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
-      
+
 Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
            const FilePath& baseDirPath,
            SEXP manipulatorSEXP)
-   : graphicsDevice_(graphicsDevice), 
+   : graphicsDevice_(graphicsDevice),
      baseDirPath_(baseDirPath),
      needsUpdate_(false),
      manipulator_(manipulatorSEXP)
@@ -46,11 +46,11 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
 }
 
 Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
-           const FilePath& baseDirPath, 
+           const FilePath& baseDirPath,
            const std::string& storageUuid,
            const DisplaySize& renderedSize)
-   : graphicsDevice_(graphicsDevice), 
-     baseDirPath_(baseDirPath), 
+   : graphicsDevice_(graphicsDevice),
+     baseDirPath_(baseDirPath),
      storageUuid_(storageUuid),
      renderedSize_(renderedSize),
      needsUpdate_(false),
@@ -60,10 +60,10 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
    // to migrate between different image backends e.g. png, jpeg, etc)
    if (!imageFilePath(storageUuid_).exists())
       invalidate();
-} 
-   
+}
+
 std::string Plot::storageUuid() const
-{  
+{
    return storageUuid_;
 }
 
@@ -99,7 +99,7 @@ SEXP Plot::manipulatorSEXP() const
 
    return manipulator_.sexp();
 }
-   
+
 void Plot::manipulatorAsJson(json::Value* pValue) const
 {
    if (hasManipulator())
@@ -118,44 +118,44 @@ void Plot::saveManipulator() const
    if (hasManipulator() && !storageUuid_.empty())
       saveManipulator(storageUuid_);
 }
-   
+
 Error Plot::renderFromDisplay()
 {
-   // we can use our cached representation if we don't need an update and our 
+   // we can use our cached representation if we don't need an update and our
    // rendered size is the same as the current graphics device size
    if ( !needsUpdate_ &&
         (renderedSize() == graphicsDevice_.displaySize()) )
    {
       return Success();
    }
-   
+
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
-   
+
    // generate snapshot and image files
    FilePath snapshotPath = snapshotFilePath(storageUuid);
    FilePath imagePath = imageFilePath(storageUuid);
    Error error = graphicsDevice_.saveSnapshot(snapshotPath, imagePath);
    if (error)
       return Error(errc::PlotRenderingError, error, ERROR_LOCATION);
-   
+
    // save rendered size
    renderedSize_ = graphicsDevice_.displaySize();
-   
+
    // save manipulator (if any)
    saveManipulator(storageUuid);
 
    // delete existing files (if any)
    Error removeError = removeFiles();
-        
+
    // update state
    storageUuid_ = storageUuid;
    needsUpdate_ = false;
-   
-   // return error status 
+
+   // return error status
    return removeError;
 }
-   
+
 Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
 {
    // if our baseDirPath_ no longer exists it means that someone
@@ -166,12 +166,12 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
 
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
- 
+
    // generate snapshot file
    FilePath snapshotFile = snapshotFilePath(storageUuid);
    Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot",
                                     snapshot,
-                                    string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
+                                    string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
    if (error)
       return error;
 
@@ -181,7 +181,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
    // OK though because we simply set needsUpdate_ = true below and the next
    // time renderFromDisplay is called it will be rendered
    //
-   
+
    // save rendered size
    renderedSize_ = graphicsDevice_.displaySize();
 
@@ -190,19 +190,19 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
 
    // delete existing files (if any)
    Error removeError = removeFiles();
-   
+
    // update state
    storageUuid_ = storageUuid;
    needsUpdate_ = true;
-   
+
    // return error status
    return removeError;
 }
-   
+
 
 std::string Plot::imageFilename() const
 {
-   return imageFilePath(storageUuid()).getFilename();
+   return imageFilePath(storageUuid()).filename();
 }
 
 Error Plot::renderToDisplay()
@@ -219,17 +219,17 @@ Error Plot::renderToDisplay()
    else
       return Success();
 }
-   
+
 Error Plot::removeFiles()
 {
    // bail if we don't have any storage
    if (storageUuid_.empty())
       return Success();
-   
+
    Error snapshotError = snapshotFilePath(storageUuid_).removeIfExists();
    Error imageError = imageFilePath(storageUuid_).removeIfExists();
    Error manipulatorError = manipulatorFilePath(storageUuid_).removeIfExists();
-   
+
    if (snapshotError)
       return Error(errc::PlotFileError, snapshotError, ERROR_LOCATION);
    else if (imageError)
@@ -258,13 +258,13 @@ FilePath Plot::snapshotFilePath() const
 
 FilePath Plot::snapshotFilePath(const std::string& storageUuid) const
 {
-   return baseDirPath_.completePath(storageUuid + ".snapshot");
+   return baseDirPath_.complete(storageUuid + ".snapshot");
 }
-   
+
 FilePath Plot::imageFilePath(const std::string& storageUuid) const
 {
    std::string extension = graphicsDevice_.imageFileExtension();
-   return baseDirPath_.completePath(storageUuid + "." + extension);
+   return baseDirPath_.complete(storageUuid + "." + extension);
 }
 
 bool Plot::hasManipulatorFile() const
@@ -274,11 +274,11 @@ bool Plot::hasManipulatorFile() const
 
 FilePath Plot::manipulatorFilePath(const std::string& storageUuid) const
 {
-   return baseDirPath_.completePath(storageUuid + ".manip");
+   return baseDirPath_.complete(storageUuid + ".manip");
 }
 
 void Plot::loadManipulatorIfNecessary() const
-{   
+{
    if (manipulator_.empty() && hasManipulatorFile())
    {
       FilePath manipPath = manipulatorFilePath(storageUuid());
@@ -304,6 +304,3 @@ void Plot::saveManipulator(const std::string& storageUuid) const
 } // namespace session
 } // namespace r
 } // namespace rstudio
-
-
-

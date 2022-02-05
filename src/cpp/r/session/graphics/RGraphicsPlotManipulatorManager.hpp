@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManipulatorManager.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,8 @@
 #define R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 
 #include <core/BoostSignals.hpp>
-#include <shared_core/Error.hpp>
-#include <shared_core/json/Json.hpp>
+#include <core/Error.hpp>
+#include <core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 
@@ -41,7 +41,7 @@ PlotManipulatorManager& plotManipulatorManager();
 
 
 class PlotManipulatorManager : boost::noncopyable
-{   
+{
 private:
    friend PlotManipulatorManager& plotManipulatorManager();
    PlotManipulatorManager();
@@ -52,10 +52,10 @@ public:
 public:
    core::Error initialize(const UnitConversionFunctions& convert);
 
-   RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator();
+   RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator() ;
    void setPlotManipulatorValues(const core::json::Object& values);
    void manipulatorPlotClicked(int x, int y);
-   
+
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
    bool hasActiveManipulator() const;
    SEXP activeManipulator() const;
@@ -76,7 +76,7 @@ private:
    bool trackingMouseClicks(SEXP manipulatorSEXP) const;
    void replayManipulator(SEXP manipulatorSEXP);
 
-private:   
+private:
    // pending manipulator
    SEXP pendingManipulatorSEXP_;
 
@@ -90,11 +90,10 @@ private:
    UnitConversionFunctions convert_;
 
 };
-   
+
 } // namespace graphics
 } // namespace session
 } // namespace r
 } // namespace rstudio
 
 #endif // R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
-

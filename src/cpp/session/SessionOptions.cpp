@@ -50,7 +50,7 @@
 using namespace rstudio::core ;
 
 namespace rstudio {
-namespace session {  
+namespace session {
 
 namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
@@ -80,11 +80,11 @@ Options& options()
    static Options instance ;
    return instance ;
 }
-   
+
 core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& osWarnings)
 {
    using namespace boost::program_options ;
-   
+
    // get the shared secret
    monitorSharedSecret_ = core::system::getenv(kMonitorSharedSecretEnvVar);
    core::system::unsetenv(kMonitorSharedSecretEnvVar);
@@ -110,7 +110,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       resourcePath_ = resourcePath_.parent();
    }
 #endif
-   
+
    // run tests flag
    options_description runTests("tests");
    runTests.add_options()
@@ -138,7 +138,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kProgramModeSessionOption,
          value<std::string>(&programMode_)->default_value("server"),
          "program mode (desktop or server");
-   
+
    // log -- logging options
    options_description log("log");
    log.add_options()
@@ -314,7 +314,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("r-core-source",
          value<std::string>(&coreRSourcePath_)->default_value("R"),
          "Core R source path")
-      ("r-modules-source", 
+      ("r-modules-source",
          value<std::string>(&modulesRSourcePath_)->default_value("R/modules"),
          "Modules R source path")
       ("r-session-library",
@@ -339,7 +339,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
       ("r-compatible-graphics-engine-version",
-         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(12),
+         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(15),
          "Maximum graphics engine version we are compatible with")
       ("r-resources-path",
          value<std::string>(&rResourcesPath_)->default_value("resources"),
@@ -366,11 +366,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("limit-xfs-disk-quota",
        value<bool>(&limitXfsDiskQuota_)->default_value(false),
        "limit xfs disk quota");
-   
+
    // external options
    options_description external("external");
    external.add_options()
-      ("external-rpostback-path", 
+      ("external-rpostback-path",
        value<std::string>(&rpostbackPath_)->default_value(kDefaultPostbackPath),
        "Path to rpostback executable")
       ("external-consoleio-path",
@@ -410,7 +410,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("external-winpty-path",
         value<std::string>(&winptyPath_)->default_value("bin"),
          "Path to winpty binaries");
-   
+
    // git options
    options_description git("git");
    git.add_options()
@@ -485,7 +485,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    ProgramStatus status = core::program_options::read(optionsDesc, argc,argv);
    if (status.exit())
       return status;
-   
+
    // make sure the program mode is valid
    if (programMode_ != kSessionProgramModeDesktop &&
        programMode_ != kSessionProgramModeServer)
@@ -569,7 +569,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          ERROR_LOCATION);
       saveActionDefault_ = r::session::kSaveActionAsk;
    }
-   
+
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath_, &rResourcesPath_);
    resolvePath(resourcePath_, &agreementFilePath_);
@@ -663,7 +663,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
                        scope,
                        userHomePath(),
                        userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath(), 
+                       session::projectIdToFilePath(userScratchPath(),
                                  FilePath(getOverlayOption(
                                        kSessionSharedStoragePath))),
                        projectSharingEnabled(),
@@ -693,7 +693,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    core::system::unsetenv(kRStudioDefaultRVersion);
    defaultRVersionHome_ = core::system::getenv(kRStudioDefaultRVersionHome);
    core::system::unsetenv(kRStudioDefaultRVersionHome);
-   
+
    // capture auth environment variables
    authMinimumUserId_ = 0;
    if (programMode_ == kSessionProgramModeServer)
@@ -867,6 +867,6 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 #endif
-   
+
 } // namespace session
 } // namespace rstudio

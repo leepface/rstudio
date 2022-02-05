@@ -18,7 +18,7 @@
 
 #include <boost/utility.hpp>
 
-#include <shared_core/json/Json.hpp>
+#include <core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 

@@ -1,7 +1,7 @@
 /*
  * RGraphicsDevDesc.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -110,7 +110,7 @@ pDevDesc allocate(const RSDevDesc& devDesc)
    int engineVersion = ::R_GE_getVersion();
    switch (engineVersion)
    {
-   
+
    case 5:
    {
       DevDescVersion5* pDD = allocAndInitCommonMembers<DevDescVersion5>(
@@ -168,7 +168,7 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->cap = devDesc.cap;
       pDD->eventEnv = devDesc.eventEnv;
       pDD->eventHelper = devDesc.eventHelper;
-      
+
       pDD->holdflush = devDesc.holdflush;
       pDD->haveTransparency = devDesc.haveTransparency;
       pDD->haveTransparentBg = devDesc.haveTransparentBg;
@@ -178,7 +178,7 @@ pDevDesc allocate(const RSDevDesc& devDesc)
 
       return (pDevDesc)pDD;
    }
-      
+
    case 12:
    case 13:
    {
@@ -190,7 +190,7 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->cap = devDesc.cap;
       pDD->eventEnv = devDesc.eventEnv;
       pDD->eventHelper = devDesc.eventHelper;
-      
+
       pDD->holdflush = devDesc.holdflush;
       pDD->haveTransparency = devDesc.haveTransparency;
       pDD->haveTransparentBg = devDesc.haveTransparentBg;
@@ -200,7 +200,7 @@ pDevDesc allocate(const RSDevDesc& devDesc)
 
       return (pDevDesc) pDD;
    }
-      
+
    case 14:
    {
       DevDescVersion14* pDD =
@@ -211,14 +211,14 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->cap = devDesc.cap;
       pDD->eventEnv = devDesc.eventEnv;
       pDD->eventHelper = devDesc.eventHelper;
-      
+
       pDD->holdflush = devDesc.holdflush;
       pDD->haveTransparency = devDesc.haveTransparency;
       pDD->haveTransparentBg = devDesc.haveTransparentBg;
       pDD->haveRaster = devDesc.haveRaster;
       pDD->haveCapture = devDesc.haveCapture;
       pDD->haveLocator = devDesc.haveLocator;
-      
+
       pDD->setPattern = devDesc.setPattern;
       pDD->releasePattern = devDesc.releasePattern;
       pDD->setClipPath = devDesc.setClipPath;
@@ -228,11 +228,47 @@ pDevDesc allocate(const RSDevDesc& devDesc)
 
       return (pDevDesc) pDD;
    }
-      
+
+   case 15:
+   {
+       DevDescVersion15* pDD =
+               allocAndInitCommonMembers<DevDescVersion15>(devDesc);
+
+       pDD->path = devDesc.path;
+       pDD->raster = devDesc.raster;
+       pDD->cap = devDesc.cap;
+       pDD->eventEnv = devDesc.eventEnv;
+       pDD->eventHelper = devDesc.eventHelper;
+
+       pDD->holdflush = devDesc.holdflush;
+       pDD->haveTransparency = devDesc.haveTransparency;
+       pDD->haveTransparentBg = devDesc.haveTransparentBg;
+       pDD->haveRaster = devDesc.haveRaster;
+       pDD->haveCapture = devDesc.haveCapture;
+       pDD->haveLocator = devDesc.haveLocator;
+
+       pDD->setPattern = devDesc.setPattern;
+       pDD->releasePattern = devDesc.releasePattern;
+       pDD->setClipPath = devDesc.setClipPath;
+       pDD->releaseClipPath = devDesc.releaseClipPath;
+       pDD->setMask = devDesc.setMask;
+       pDD->releaseMask = devDesc.releaseMask;
+
+       pDD->defineGroup = devDesc.defineGroup;
+       pDD->useGroup = devDesc.useGroup;
+       pDD->releaseGroup = devDesc.releaseGroup;
+       pDD->stroke = devDesc.stroke;
+       pDD->fill = devDesc.fill;
+       pDD->fillStroke = devDesc.fillStroke;
+       pDD->capabilities = devDesc.capabilities;
+
+       return (pDevDesc) pDD;
+   }
+
    default:
    {
-      DevDescVersion14* pDD =
-            (DevDescVersion14*) std::calloc(1, sizeof(DevDescVersion14));
+      DevDescVersion15* pDD =
+            (DevDescVersion15*) std::calloc(1, sizeof(DevDescVersion15));
       *pDD = devDesc;
       return (pDevDesc) pDD;
    }
@@ -253,7 +289,7 @@ void setCommonDeviceAttributes(T pDev, T pShadow)
    pDev->clipTop = pShadow->clipTop;
    pDev->clipRight = pShadow->clipRight;
    pDev->clipBottom = pShadow->clipBottom;
-   
+
    pDev->cra[0] = pShadow->cra[0];
    pDev->cra[1] = pShadow->cra[1];
    pDev->startps = pShadow->startps;
@@ -289,55 +325,57 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
    int engineVersion = ::R_GE_getVersion();
    switch (engineVersion)
    {
-   
+
    case 5:
       setCommonDeviceAttributes((DevDescVersion5*) pDev, (DevDescVersion5*) pShadow);
       break;
-      
+
    case 6:
       setCommonDeviceAttributes((DevDescVersion6*) pDev, (DevDescVersion6*) pShadow);
       break;
-      
+
    case 7:
       setCommonDeviceAttributes((DevDescVersion7*) pDev, (DevDescVersion7*) pShadow);
       break;
-      
+
    case 8:
       setCommonDeviceAttributes((DevDescVersion8*) pDev, (DevDescVersion8*) pShadow);
       break;
-      
+
    case 9:
    case 10:
    case 11:
       setCommonDeviceAttributes((DevDescVersion9*) pDev, (DevDescVersion9*) pShadow);
       break;
-      
+
    case 12:
    case 13:
    {
       setCommonDeviceAttributes((DevDescVersion12*) pDev, (DevDescVersion12*) pShadow);
-      
+
       auto* pLhs = (DevDescVersion12*) pDev;
       auto* pRhs = (DevDescVersion12*) pShadow;
-      
+
       pLhs->canGenIdle = pRhs->canGenIdle;
-      
+
       break;
    }
-      
+
    case 14:
+   case 15:
+
    default:
    {
-      setCommonDeviceAttributes((DevDescVersion14*) pDev, (DevDescVersion14*) pShadow);
-      
-      auto* pLhs = (DevDescVersion14*) pDev;
-      auto* pRhs = (DevDescVersion14*) pShadow;
-      
+      setCommonDeviceAttributes((DevDescVersion15*) pDev, (DevDescVersion15*) pShadow);
+
+      auto* pLhs = (DevDescVersion15*) pDev;
+      auto* pRhs = (DevDescVersion15*) pShadow;
+
       pLhs->canGenIdle      = pRhs->canGenIdle;
-      
+
       break;
    }
-      
+
    }
 }
 
@@ -371,8 +409,9 @@ void activate(const pDevDesc dd)
       pActivateFn = ((DevDescVersion12*)dd)->activate;
       break;
    case 14:
+   case 15:
    default:
-      pActivateFn = ((DevDescVersion14*)dd)->activate;
+      pActivateFn = ((DevDescVersion15*)dd)->activate;
       break;
    }
 
@@ -410,8 +449,9 @@ void circle(double x, double y, double r, const pGEcontext gc, pDevDesc dd)
       pCircleFn = ((DevDescVersion12*)dd)->circle;
       break;
    case 14:
+   case 15:
    default:
-      pCircleFn = ((DevDescVersion14*)dd)->circle;
+      pCircleFn = ((DevDescVersion15*)dd)->circle;
       break;
    }
 
@@ -449,8 +489,9 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dd)
       pClipFn = ((DevDescVersion12*)dd)->clip;
       break;
    case 14:
+   case 15:
    default:
-      pClipFn = ((DevDescVersion14*)dd)->clip;
+      pClipFn = ((DevDescVersion15*)dd)->clip;
       break;
    }
 
@@ -488,10 +529,11 @@ void close(pDevDesc dd)
       pCloseFn = ((DevDescVersion12*)dd)->close;
       break;
    case 14:
+   case 15:
    default:
-      pCloseFn = ((DevDescVersion14*)dd)->close;
+      pCloseFn = ((DevDescVersion15*)dd)->close;
       break;
-      
+
    }
 
    // call it
@@ -528,8 +570,9 @@ void deactivate(pDevDesc dd)
       pDeactivateFn = ((DevDescVersion12*)dd)->deactivate;
       break;
    case 14:
+   case 15:
    default:
-      pDeactivateFn = ((DevDescVersion14*)dd)->deactivate;
+      pDeactivateFn = ((DevDescVersion15*)dd)->deactivate;
       break;
    }
 
@@ -567,8 +610,9 @@ Rboolean locator(double *x, double *y, pDevDesc dd)
       pLocatorFn = ((DevDescVersion12*)dd)->locator;
       break;
    case 14:
+   case 15:
    default:
-      pLocatorFn = ((DevDescVersion14*)dd)->locator;
+      pLocatorFn = ((DevDescVersion15*)dd)->locator;
       break;
    }
 
@@ -606,8 +650,9 @@ void line(double x1, double y1, double x2, double y2, const pGEcontext gc, pDevD
       pLineFn = ((DevDescVersion12*)dd)->line;
       break;
    case 14:
+   case 15:
    default:
-      pLineFn = ((DevDescVersion14*)dd)->line;
+      pLineFn = ((DevDescVersion15*)dd)->line;
       break;
    }
 
@@ -645,8 +690,9 @@ void metricInfo(int c, const pGEcontext gc, double *ascent, double *descent, dou
       pMetricInfoFn = ((DevDescVersion12*)dd)->metricInfo;
       break;
    case 14:
+   case 15:
    default:
-      pMetricInfoFn = ((DevDescVersion14*)dd)->metricInfo;
+      pMetricInfoFn = ((DevDescVersion15*)dd)->metricInfo;
       break;
    }
 
@@ -684,8 +730,9 @@ void mode(int mode, pDevDesc dd)
       pModeFn = ((DevDescVersion12*)dd)->mode;
       break;
    case 14:
+   case 15:
    default:
-      pModeFn = ((DevDescVersion14*)dd)->mode;
+      pModeFn = ((DevDescVersion15*)dd)->mode;
       break;
    }
 
@@ -724,8 +771,9 @@ void newPage(const pGEcontext gc, pDevDesc dd)
       pNewPageFn = ((DevDescVersion12*)dd)->newPage;
       break;
    case 14:
+   case 15:
    default:
-      pNewPageFn = ((DevDescVersion14*)dd)->newPage;
+      pNewPageFn = ((DevDescVersion15*)dd)->newPage;
       break;
    }
 
@@ -802,8 +850,9 @@ void polyline(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd)
       pPolylineFn = ((DevDescVersion12*)dd)->polyline;
       break;
    case 14:
+   case 15:
    default:
-      pPolylineFn = ((DevDescVersion14*)dd)->polyline;
+      pPolylineFn = ((DevDescVersion15*)dd)->polyline;
       break;
    }
 
@@ -841,8 +890,9 @@ void rect(double x0, double y0, double x1, double y1, const pGEcontext gc, pDevD
       pRectFn = ((DevDescVersion12*)dd)->rect;
       break;
    case 14:
+   case 15:
    default:
-      pRectFn = ((DevDescVersion14*)dd)->rect;
+      pRectFn = ((DevDescVersion15*)dd)->rect;
       break;
    }
 
@@ -878,8 +928,9 @@ void path(double *x,
       pPathFn = ((DevDescVersion12*)dd)->path;
       break;
    case 14:
+   case 15:
    default:
-      pPathFn = ((DevDescVersion14*)dd)->path;
+      pPathFn = ((DevDescVersion15*)dd)->path;
       break;
    }
 
@@ -924,8 +975,9 @@ void raster(unsigned int *raster,
       pRasterFn = ((DevDescVersion12*)dd)->raster;
       break;
    case 14:
+   case 15:
    default:
-      pRasterFn = ((DevDescVersion14*)dd)->raster;
+      pRasterFn = ((DevDescVersion15*)dd)->raster;
       break;
    }
 
@@ -959,8 +1011,9 @@ SEXP cap(pDevDesc dd)
       pCapFn = ((DevDescVersion12*)dd)->cap;
       break;
    case 14:
+   case 15:
    default:
-      pCapFn = ((DevDescVersion14*)dd)->cap;
+      pCapFn = ((DevDescVersion15*)dd)->cap;
       break;
    }
 
@@ -997,8 +1050,9 @@ void size(double *left, double *right, double *bottom, double *top, pDevDesc dd)
       pSizeFn = ((DevDescVersion12*)dd)->size;
       break;
    case 14:
+   case 15:
    default:
-      pSizeFn = ((DevDescVersion14*)dd)->size;
+      pSizeFn = ((DevDescVersion15*)dd)->size;
       break;
    }
 
@@ -1035,8 +1089,9 @@ double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
       pStrWidthFn = ((DevDescVersion12*)dev)->strWidth;
       break;
    case 14:
+   case 15:
    default:
-      pStrWidthFn = ((DevDescVersion14*)dev)->strWidth;
+      pStrWidthFn = ((DevDescVersion15*)dev)->strWidth;
       break;
    }
 
@@ -1080,8 +1135,9 @@ void text(double x,
       pTextFn = ((DevDescVersion12*)dev)->text;
       break;
    case 14:
+   case 15:
    default:
-      pTextFn = ((DevDescVersion14*)dev)->text;
+      pTextFn = ((DevDescVersion15*)dev)->text;
       break;
    }
 
@@ -1092,37 +1148,39 @@ void text(double x,
 SEXP setPattern(SEXP pattern, pDevDesc dd)
 {
    int engineVersion = ::R_GE_getVersion();
-   
+
    SEXP (*callback)(SEXP pattern, pDevDesc dd) = nullptr;
-   
+
    switch (engineVersion)
    {
    case 14:
+   case 15:
    default:
-      callback = ((DevDescVersion14*)dd)->setPattern;
+      callback = ((DevDescVersion15*)dd)->setPattern;
       break;
    }
-   
+
    if (callback != nullptr)
       return callback(pattern, dd);
-   
+
    return R_NilValue;
 }
 
 void releasePattern(SEXP ref, pDevDesc dd)
 {
    int engineVersion = ::R_GE_getVersion();
-   
+
    void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
-   
+
    switch (engineVersion)
    {
    case 14:
+   case 15:
    default:
-      callback = ((DevDescVersion14*)dd)->releasePattern;
+      callback = ((DevDescVersion15*)dd)->releasePattern;
       break;
    }
-   
+
    if (callback != nullptr)
       callback(ref, dd);
 }
@@ -1130,37 +1188,39 @@ void releasePattern(SEXP ref, pDevDesc dd)
 SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
 {
    int engineVersion = ::R_GE_getVersion();
-   
+
    SEXP (*callback)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
-   
+
    switch (engineVersion)
    {
    case 14:
+   case 15:
    default:
-      callback = ((DevDescVersion14*)dd)->setClipPath;
+      callback = ((DevDescVersion15*)dd)->setClipPath;
       break;
    }
-   
+
    if (callback != nullptr)
       return callback(path, ref, dd);
-   
+
    return R_NilValue;
 }
 
 void releaseClipPath(SEXP ref, pDevDesc dd)
 {
    int engineVersion = ::R_GE_getVersion();
-   
+
    void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
-   
+
    switch (engineVersion)
    {
    case 14:
+   case 15:
    default:
-      callback = ((DevDescVersion14*)dd)->releaseClipPath;
+      callback = ((DevDescVersion15*)dd)->releaseClipPath;
       break;
    }
-   
+
    if (callback != nullptr)
       callback(ref, dd);
 }
@@ -1168,39 +1228,161 @@ void releaseClipPath(SEXP ref, pDevDesc dd)
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
 {
    int engineVersion = ::R_GE_getVersion();
-   
+
    SEXP (*callback)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
-   
+
    switch (engineVersion)
    {
    case 14:
+   case 15:
    default:
-      callback = ((DevDescVersion14*)dd)->setMask;
+      callback = ((DevDescVersion15*)dd)->setMask;
       break;
    }
-   
+
    if (callback != nullptr)
       return callback(path, ref, dd);
-   
+
    return R_NilValue;
 }
 
 void releaseMask(SEXP ref, pDevDesc dd)
 {
    int engineVersion = ::R_GE_getVersion();
-   
+
    void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
-   
+
    switch (engineVersion)
    {
    case 14:
+   case 15:
    default:
-      callback = ((DevDescVersion14*)dd)->releaseMask;
+      callback = ((DevDescVersion15*)dd)->releaseMask;
       break;
    }
-   
+
    if (callback != nullptr)
        callback(ref, dd);
+}
+
+SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
+{
+    int engineVersion = ::R_GE_getVersion();
+
+    SEXP (*callback)(SEXP source, int op, SEXP destination, pDevDesc dd) = nullptr;
+
+    switch (engineVersion)
+    {
+        case 15:
+        default:
+            callback = ((DevDescVersion15*)dd)->defineGroup;
+            break;
+    }
+
+    if (callback != nullptr)
+        return callback(source, op, destination, dd);
+
+    return R_NilValue;
+}
+
+void useGroup(SEXP ref, SEXP trans, pDevDesc dd)
+{
+    int engineVersion = ::R_GE_getVersion();
+
+    void (*callback)(SEXP ref, SEXP trans, pDevDesc dd) = nullptr;
+
+    switch (engineVersion)
+    {
+        case 15:
+        default:
+            callback = ((DevDescVersion15*)dd)->useGroup;
+            break;
+    }
+
+    if (callback != nullptr)
+        callback(ref, trans, dd);
+}
+
+void releaseGroup(SEXP ref, pDevDesc dd)
+{
+    int engineVersion = ::R_GE_getVersion();
+
+    void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
+
+    switch (engineVersion)
+    {
+        case 15:
+        default:
+            callback = ((DevDescVersion15*)dd)->releaseGroup;
+            break;
+    }
+
+    if (callback != nullptr)
+        callback(ref, dd);
+}
+
+void stroke(SEXP path, const pGEcontext gc, pDevDesc dd)
+{
+    int engineVersion = ::R_GE_getVersion();
+
+    void (*callback)(SEXP path, const pGEcontext gc, pDevDesc dd) = nullptr;
+
+    switch (engineVersion)
+    {
+        case 15:
+        default:
+            callback = ((DevDescVersion15*)dd)->stroke;
+            break;
+    }
+
+    if (callback != nullptr)
+        callback(path, gc, dd);
+}
+
+void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+    int engineVersion = ::R_GE_getVersion();
+
+    void (*callback)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) = nullptr;
+
+    switch (engineVersion)
+    {
+        case 15:
+        default:
+            callback = ((DevDescVersion15*)dd)->fill;
+            break;
+    }
+
+    if (callback != nullptr)
+        callback(path, rule, gc, dd);
+}
+
+void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+    int engineVersion = ::R_GE_getVersion();
+
+    void (*callback)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) = nullptr;
+
+    switch (engineVersion)
+    {
+        case 15:
+        default:
+            callback = ((DevDescVersion15*)dd)->fillStroke;
+            break;
+    }
+
+    if (callback != nullptr)
+        callback(path, rule, gc, dd);
+}
+
+SEXP capabilities(SEXP cap)
+{
+    SEXP (*callback)(SEXP cap) = nullptr;
+
+    if (callback != nullptr)
+        return callback(cap);
+
+    return R_NilValue;
 }
 
 
@@ -1233,8 +1415,9 @@ void setSize(pDevDesc pDD)
       pSizeFn = ((DevDescVersion12*)pDD)->size;
       break;
    case 14:
+   case 15:
    default:
-      pSizeFn = ((DevDescVersion14*)pDD)->size;
+      pSizeFn = ((DevDescVersion15*)pDD)->size;
       break;
    }
 
@@ -1260,4 +1443,3 @@ void setSize(pDevDesc pDD)
 } // namespace session
 } // namespace r
 } // namespace rstudio
-
